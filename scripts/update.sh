@@ -107,7 +107,7 @@ log_info "\n=== Please review the changes in the ${ENV_FILE} file, if there is a
 log_info "\n=== Project has been updated correctly for ${NODE_TYPE} on ${NETWORK}"
 log_info "\n=== Start the compose project with the following command: "
 log_info "\n========================"
-log_warn "docker compose -f ${DEPLOYMENT_DIR}/docker-compose.yml up -d --force-recreate"
+log_warn "docker compose -f ${DEPLOYMENT_DIR}/docker-compose.yml up -d --pull --force-recreate"
 log_info "========================\n"
 
 exit 0
