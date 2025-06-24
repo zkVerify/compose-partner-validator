@@ -1,0 +1,104 @@
+volumes:
+  acme:
+  certs:
+  html:
+  node-data:
+
+networks:
+  node-network:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${INTERNAL_NETWORK_SUBNET:?err_unset}
+  inet:
+
+services:
+  node:
+    image: horizenlabs/zkverify:${NODE_VERSION:?err_unset}
+    container_name: "${NODE_ROLE:?err_unset}"
+    hostname: "${NODE_ROLE:?err_unset}"
+    restart: on-failure:5
+    env_file:
+      - .env
+    environment:
+      - "LETSENCRYPT_HOST=${ACME_VHOST:?err_unset}"
+      - "VIRTUAL_HOST=${ACME_VHOST:?err_unset}"
+      - "VIRTUAL_PORT=${NODE_NET_PROMETHEUS_PORT:?err_unset}"
+      - VIRTUAL_PATH=/metrics
+    networks:
+      node-network:
+        ipv4_address: "${NODE_NET_IP_ADDRESS:?err_unset}"
+      inet:
+    ports:
+      - "${NODE_NET_P2P_PORT:?err_unset}:${NODE_NET_P2P_PORT:?err_unset}"
+    expose:
+      - "${NODE_NET_PROMETHEUS_PORT:?err_unset}"
+    volumes:
+      - "node-data:/data:rw"
+    labels:
+      - "com.github.nginx-proxy.nginx-proxy.ssl_verify_client=on"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "512m"
+        max-file: "4"
+
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
+    hostname: nginx-proxy
+    pull_policy: always
+    restart: on-failure:5
+    depends_on:
+      - node
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "html:/usr/share/nginx/html:rw"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "../../../certs:/etc/nginx/certs:rw"
+    environment:
+      - "DEBUG=${NGINX_DEBUG:-false}"
+      - "RESOLVERS=127.0.0.11 8.8.8.8 valid=300s timeout=5s"
+      - HTTPS_PORT=443
+      - TRUST_DOWNSTREAM_PROXY=true
+    networks:
+      node-network:
+        ipv4_address: "${NGINX_NET_IP_ADDRESS:?err_unset}"
+      inet:
+    tmpfs:
+      - /var/cache/nginx
+      - /run
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "512m"
+        max-file: "4"
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
+    hostname: nginx-proxy-acme
+    pull_policy: always
+    restart: on-failure:5
+    depends_on:
+      - nginx-proxy
+    environment:
+      - "DEFAULT_EMAIL=${ACME_DEFAULT_EMAIL:?err_unset}"
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - "acme:/etc/acme.sh:rw"
+      - "../../../certs:/etc/nginx/certs:rw"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - inet
+    tmpfs:
+      - /var/cache
+      - /run
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "512m"
+        max-file: "4"
