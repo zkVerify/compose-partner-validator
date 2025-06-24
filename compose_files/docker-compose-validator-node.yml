@@ -17,7 +17,6 @@ services:
     image: horizenlabs/zkverify:${NODE_VERSION:?err_unset}
     container_name: "${NODE_ROLE:?err_unset}"
     hostname: "${NODE_ROLE:?err_unset}"
-    pull_policy: always
     restart: on-failure:5
     env_file:
       - .env
