@@ -52,12 +52,12 @@ Alternatively, these secrets can be injected at runtime using a custom container
 
 Use the following steps to implement this approach:
 
-1. Delete values of **ZKV_NODE_KEY** and **ZKV_SECRET_PHRASE** under the `deployment/validator-node/${NETWORK}/.env`
+1. Delete values of **ZKV_NODE_KEY** and **ZKV_SECRET_PHRASE** under the `deployments/validator-node/${NETWORK}/.env`
     ```bazaar
     ZKV_NODE_KEY=""
     ZKV_SECRET_PHRASE=""
     ```
-2. Create **entrypoint_secrets.sh** file under `deployment/validator-node/${NETWORK}/` directory. For example:
+2. Create **entrypoint_secrets.sh** file under `deployments/validator-node/${NETWORK}/` directory. For example:
     ```
     #!/usr/bin/env sh
     set -eu
@@ -68,7 +68,7 @@ Use the following steps to implement this approach:
     echo "=== 🚀 Starting the application entrypoint now..."
     exec /app/entrypoint.sh "$@"
     ```
-3. Modify `deployment/validator-node/${NETWORK}/docker-compose.yml` file to mount and execute **custom entrypoint** script
+3. Modify `deployments/validator-node/${NETWORK}/docker-compose.yml` file to mount and execute **custom entrypoint** script
     ```
     volumes:
       - "node-data:/data:rw"
