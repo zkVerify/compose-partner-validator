@@ -1,4 +1,10 @@
 # Changelog
+**0.2.0**
+---
+
+CHANGES:
+* general: support for Mainnet added + small fixes
+
 **0.1.1**
 ---
 

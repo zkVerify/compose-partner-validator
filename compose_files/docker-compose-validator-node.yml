@@ -60,7 +60,6 @@ services:
       - "../../../certs:/etc/nginx/certs:rw"
     environment:
       - "DEBUG=${NGINX_DEBUG:-false}"
-      - "RESOLVERS=127.0.0.11 8.8.8.8 valid=300s timeout=5s"
       - HTTPS_PORT=443
       - TRUST_DOWNSTREAM_PROXY=true
     networks:
