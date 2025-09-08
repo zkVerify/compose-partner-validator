@@ -22,6 +22,9 @@ log() {
   local green=32
   # shellcheck disable=SC2034
   local yellow=33
+  # shellcheck disable=SC2034
+  local blue=36
+
 
   local usage="Usage: ${FUNCNAME[0]} style color \"message\"\nStyles: bold, italic, normal, light\nColors: black, red, green, yellow\nExample: log bold red \"Error: Something went wrong\""
   [ "$#" -lt 3 ] && {
@@ -39,7 +42,7 @@ log() {
     exit 1
   fi
   # validate color is in black, red, green
-  if [[ ! "${color}" =~ ^(black|red|green|yellow)$ ]]; then
+  if [[ ! "${color}" =~ ^(black|red|green|yellow|blue)$ ]]; then
     message="Error: Invalid color. Must be one of black, red, green or yellow."
     echo -e "\033[${bold};${red}m${message}\033[0m"
     exit 1
@@ -66,6 +69,13 @@ log_warn() {
   [ "${1:-}" = "usage" ] && log_debug "${usage}" && return
   [ "$#" -ne 1 ] && fn_die "\n${FUNCNAME[0]} error: function requires exactly one argument.\n\n${usage}"
   log normal yellow "${1}" >&2
+}
+
+log_blue() {
+  local usage="Log a message in blue - Usage: ${FUNCNAME[0]} {message}"
+  [ "${1:-}" = "usage" ] && log_debug "${usage}" && return
+  [ "$#" -ne 1 ] && fn_die "\n${FUNCNAME[0]} error: function requires exactly one argument.\n\n${usage}"
+  log bold blue "${1}" >&2
 }
 
 log_red() {
@@ -127,7 +137,7 @@ verify_required_commands() {
 
   command -v docker &>/dev/null || fn_die "${FUNCNAME[0]} Error: 'docker' is required to run this script, see installation instructions at 'https://docs.docker.com/engine/install/'."
 
-  (docker compose version 2>&1 | grep -q v2) || fn_die "${FUNCNAME[0]} Error: 'docker compose' is required to run this script, see installation instructions at 'https://docs.docker.com/compose/install/'."
+  (docker compose version 2>&1 | grep -q "v2\|version 2") || fn_die "${FUNCNAME[0]} Error: 'docker compose' is required to run this script, see installation instructions at 'https://docs.docker.com/compose/install/'."
 
   if [ "$(uname)" = "Darwin" ]; then
     command -v gsed &>/dev/null || fn_die "${FUNCNAME[0]} Error: 'gnu-sed' is required to run this script in MacOS environment, see installation instructions at 'https://formulae.brew.sh/formula/gnu-sed'. Make sure to add it to your PATH."
@@ -201,7 +211,7 @@ select_node_type() {
 
 select_network() {
   log_warn "\nWhat 'network' would you like to use: "
-  NETWORKS="testnet mainnet"
+  NETWORKS="mainnet"
   NETWORK="$(selection "${NETWORKS}")"
   export NETWORK
 }
@@ -212,7 +222,7 @@ set_deployment_dir() {
 }
 
 set_env_file() {
-  ENV_FILE_TEMPLATE="${ROOT_DIR}/env/.env.${NODE_TYPE}.${NETWORK}.template"
+  ENV_FILE_TEMPLATE="${ROOT_DIR}/env/${NETWORK}/.env.${NODE_TYPE}.template"
   if [ ! -s "${ENV_FILE_TEMPLATE}" ]; then
     fn_die "\nError: Environment template file '${ENV_FILE_TEMPLATE}' is missing or empty. Exiting ..."
   fi
@@ -259,7 +269,7 @@ create_secret_phrase() {
       fn_die "Secret phrase import aborted; please run again the init.sh script. Exiting ...\n"
     fi
   else
-    if ! secret_json="$(docker run --rm --entrypoint zkv-relay horizenlabs/zkverify:"${NODE_VERSION}" key generate --output-type json)"; then
+    if ! secret_json="$(docker run --rm --entrypoint zkv-relay horizenlabs/zkverify:"${NODE_VERSION}" key generate -w24 --output-type json)"; then
       fn_die "\nError: could not generate secret phrase. Fix it before proceeding any further. Exiting...\n"
     fi
     if [ -z "${secret_json}" ]; then
@@ -298,7 +308,7 @@ set_up_node_name_env_var() {
 # Function to set and check if the FQDN is valid
 set_acme_vhost() {
   while true; do
-    log_warn "\nPlease type or paste a valid FQDN value for Let's Encrypt to use for monitoring ssl configuration.\nIt has to satisfy the following requirements: https://github.com/nginx-proxy/acme-companion/blob/904b5e38b17183c7c40e194869faad08b09fa9dc/README.md#http-01-challenge-requirements"
+    log_warn "\nPlease type or paste a valid FQDN value for Let's Encrypt to use for 'p2p/wss' support setup.\nIt has to satisfy the following requirements: https://github.com/nginx-proxy/acme-companion/blob/main/README.md#http-01-challenge-requirements"
     read -rp "#? " fqdn
 
     # Check if the input is empty
@@ -308,7 +318,7 @@ set_acme_vhost() {
     fi
 
     # Check if the FQDN matches the regex pattern
-    if [[ "${fqdn}" =~ ^([a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
+    if [[ "$fqdn" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$ ]]; then
       # Ask for confirmation
       nginx_value_confirm="$(selection_yn "\nDo you confirm this is the FQDN value you want to use: ${fqdn}?")"
       if [ "${nginx_value_confirm}" = "yes" ]; then

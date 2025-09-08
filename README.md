@@ -34,7 +34,6 @@ This script will generate all necessary deployment files under the [deployments]
 ### Optional: ZKV Node Data Snapshots
 
 To reduce the time required for a node's startup, **daily snapshots of chain data** are available for:
-- Testnet: https://bootstraps.zkverify.io/
 - Mainnet: **<PLACEHOLDER_FOR_MAINNET_URL>** <!-- TODO: Replace with mainnet snapshot URL -->
 
 Snapshots are available in two forms:
