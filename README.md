@@ -72,7 +72,7 @@ Use the following steps to implement this approach:
     volumes:
       - "node-data:/data:rw"
       - "./entrypoint_secrets.sh:/app/entrypoint_secrets.sh:rw"
-    entrypoint: [ "/app/entrypoint_secrets.sh" ]
+    entrypoint: ["/app/entrypoint_secrets.sh"]
     ```
 4. Start compose project using the command provided in the end of [init.sh](./scripts/init.sh) script execution.
 
