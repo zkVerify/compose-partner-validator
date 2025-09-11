@@ -211,7 +211,7 @@ select_node_type() {
 
 select_network() {
   log_warn "\nWhat 'network' would you like to use: "
-  NETWORKS="mainnet"
+  NETWORKS="testnet mainnet"
   NETWORK="$(selection "${NETWORKS}")"
   export NETWORK
 }

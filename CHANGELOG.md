@@ -1,4 +1,10 @@
 # Changelog
+**0.2.1**
+---
+
+CHANGES:
+* general: support for Testnet is back
+
 **0.2.0**
 ---
 

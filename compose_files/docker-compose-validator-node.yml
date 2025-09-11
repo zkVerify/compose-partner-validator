@@ -16,23 +16,22 @@ services:
   node:
     image: horizenlabs/zkverify:${NODE_VERSION:?err_unset}
     container_name: "${NODE_ROLE:?err_unset}"
-    hostname: "${NODE_ROLE:?err_unset}"
     restart: on-failure:5
     env_file:
       - .env
     environment:
       - "LETSENCRYPT_HOST=${ACME_VHOST:?err_unset}"
       - "VIRTUAL_HOST=${ACME_VHOST:?err_unset}"
-      - "VIRTUAL_PORT=${NODE_NET_PROMETHEUS_PORT:?err_unset}"
+      - "VIRTUAL_PORT=${NODE_NET_PROMETHEUS_PORT:-9615}"
       - VIRTUAL_PATH=/metrics
     networks:
       node-network:
         ipv4_address: "${NODE_NET_IP_ADDRESS:?err_unset}"
       inet:
     ports:
-      - "${NODE_NET_P2P_PORT:?err_unset}:${NODE_NET_P2P_PORT:?err_unset}"
+      - "${NODE_NET_P2P_PORT:-30333}:${NODE_NET_P2P_PORT:-30333}"
     expose:
-      - "${NODE_NET_PROMETHEUS_PORT:?err_unset}"
+      - "${NODE_NET_PROMETHEUS_PORT:-9615}"
     volumes:
       - "node-data:/data:rw"
     labels:
@@ -46,7 +45,6 @@ services:
   nginx-proxy:
     image: nginxproxy/nginx-proxy
     container_name: nginx-proxy
-    hostname: nginx-proxy
     pull_policy: always
     restart: on-failure:5
     depends_on:
@@ -78,18 +76,16 @@ services:
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
-    hostname: nginx-proxy-acme
     pull_policy: always
     restart: on-failure:5
     depends_on:
       - nginx-proxy
     environment:
       - "DEFAULT_EMAIL=${ACME_DEFAULT_EMAIL:?err_unset}"
-    volumes_from:
-      - nginx-proxy
     volumes:
       - "acme:/etc/acme.sh:rw"
       - "../../../certs:/etc/nginx/certs:rw"
+      - "html:/usr/share/nginx/html:rw"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - inet
