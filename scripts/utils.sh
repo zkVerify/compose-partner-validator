@@ -281,6 +281,16 @@ create_secret_phrase() {
     log_red "\n***STORE A COPY OF THE FILE IN A SAFE PLACE. ONCE STORED THE FILE CAN BE DELETED. IT IS REQUIRED TO RECOVER (IF NEEDED) THE NODE***"
     sleep 2
     secret_phrase="$(jq -r '.secretPhrase' "${DEPLOYMENT_DIR}/configs/node/secrets/secret.json")"
+    if ! public_key_ed25519="$(docker run --rm --entrypoint zkv-relay horizenlabs/zkverify:"${NODE_VERSION}" key inspect "${secret_phrase}" --scheme ed25519 --output-type json | jq -r '.publicKey')"; then
+      fn_die "\nError: could not extract the Ed25519 public key. Fix it before proceeding any further. Exiting...\n"
+    fi
+    public_key_sr25519="$(jq -r '.publicKey' "${DEPLOYMENT_DIR}/configs/node/secrets/secret.json")"
+    echo -e "\n# Public keys to be set on-chain, see section Join Proof of Stake in the README" >> "${ENV_FILE}"
+    echo "# PUBKEY_BABE=${public_key_sr25519}" >> "${ENV_FILE}"
+    echo "# PUBKEY_GRANDPA=${public_key_ed25519}" >> "${ENV_FILE}"
+    echo "# PUBKEY_PARA_VALIDATOR=${public_key_sr25519}" >> "${ENV_FILE}"
+    echo "# PUBKEY_PARA_ASSIGNMENT=${public_key_sr25519}" >> "${ENV_FILE}"
+    echo "# PUBKEY_AUTHORITY_DISCOVERY=${public_key_sr25519}" >> "${ENV_FILE}"
   fi
   if [ -z "${secret_phrase}" ]; then
     fn_die "\nError: secret phrase is empty. Fix it before proceeding any further. Exiting...\n"
