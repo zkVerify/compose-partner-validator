@@ -1,25 +1,14 @@
-# Changelog
-**0.2.1**
----
+## 1.0.0
+* general: Release to public
 
-CHANGES:
+## 0.2.1
 * general: support for Testnet is back
 
-**0.2.0**
----
-
-CHANGES:
+## 0.2.0
 * general: support for Mainnet added + small fixes
 
-**0.1.1**
----
-
-CHANGES:
+## 0.1.1
 * general: README.md file typo fix and COMPOSE_PROJECT_NAME value adjusted
 
-
-**0.1.0**
----
-
-CHANGES:
+## 0.1.0
 * general: zkVerify validator node compose project for external partners

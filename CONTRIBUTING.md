@@ -10,7 +10,7 @@
 # Filing bug reports:
 
 1. Follow the GitHub issue guide
-2. If it requires secrecy, email info@horizen.io
+2. If it requires secrecy, email security@zkverify.io
 
 # What we're looking for:
 
