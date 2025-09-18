@@ -82,13 +82,14 @@ services:
       - nginx-proxy
     environment:
       - "DEFAULT_EMAIL=${ACME_DEFAULT_EMAIL:?err_unset}"
+      - NGINX_PROXY_CONTAINER=nginx-proxy
     volumes:
       - "acme:/etc/acme.sh:rw"
       - "../../../certs:/etc/nginx/certs:rw"
       - "html:/usr/share/nginx/html:rw"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
-      - inet
+      inet:
     tmpfs:
       - /var/cache
       - /run
