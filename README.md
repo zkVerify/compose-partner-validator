@@ -178,7 +178,7 @@ In order to claim the new tokens you and your nominators deserve for securing th
 
 the era index being retrievable from section `Developer` then to the subsection `Chain state`, state `staking`, `erasRewardPoints`, then filtering with respect to your validator account. Notice that an era lasts for 6 hours, so you will have to claim the rewards for up to 4 eras per day. **Rewards must be claimed within 30 eras (i.e. approximately 1 week) since the end of an era, otherwise the reward for such era is lost.**
 
-You can also check what eras have alredy been claimed from section `Developer` then to the subsection `Chain state`, state `staking`, `claimedRewards`, then filtering by era and your validator account. An empty result indicates that no claim was performed for such era for such validator, whereas any result which includes a `0` (plus potentially some other digits in case of more than 64 nominators) indicates that the reward was already claimed for such era and such validator.
+You can also check what eras have already been claimed from section `Developer` then to the subsection `Chain state`, state `staking`, `claimedRewards`, then filtering by era number and your validator account. An empty result indicates that no claim was performed for such era for such validator, whereas any result which includes a `0` (plus potentially some other digits in case of more than 64 nominators) indicates that the reward was already claimed for such era and such validator.
 
 ![claimed](./doc/polkadotjs_claimedrewards.png?raw=true "PolkadotJS Claimed Rewards")
 
