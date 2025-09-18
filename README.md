@@ -2,11 +2,24 @@
 
 This repository contains all the necessary resources for deploying a zkVerify validator node for external partners. 
 
+In order to help launch a node on your validation machine, we provide a set of scripts that automate the configuration of the Docker Compose project comprising a zkVerify node, and a nginx reverse proxy to let the zkVerify team access its metrics interface.
+
+We also provide instructions on the on-chain activities needed to become an active validator in the Proof of Stake consensus of zkVerify, and to claim the rewards for validating afterwards.
+
 ## Project overview
+
+The project includes the following scripts ([full description](#management-scripts)):
+* *init.sh*: creates a new configuration for the Docker Compose project for a validator deployment
+* *start.sh*: starts the Docker Compose deployment
+* *stop.sh*: stops the Docker Compose deployment
+* *update.sh*: updates the existing configuration (if any) to align with the latest templates included with this repository
+* *destroy.sh*: stops any running Docker Compose deployment and removes any existing configuration
+
+All the scripts in this repository prompt for selection of the **node type** and the **network** to deploy.
 
 There is only one supported **node type** available for deployment:  `validator`
 
-All scripts in this repository prompt for selection of the **node type** and the **network** to deploy.
+The **network** can be chosen to be *testnet* (i.e. [the Volta testnet](https://polkadot.js.org/apps/?rpc=wss://zkverify-volta-rpc.zkverify.io)), or *mainnet* (i.e. [the Mainnet](https://polkadot.js.org/apps/?rpc=wss://zkverify-rpc.zkverify.io)).
 
 ---
 
@@ -20,6 +33,9 @@ All scripts in this repository prompt for selection of the **node type** and the
 ---
 
 ## Instructions
+In order to become an active validator on zkVerify, and be compensated for such activities, you need to (1) [set up your node](#setting-up-the-node), and (2) [state your intent on chain in the Proof of Stake consensus](#join-proof-of-stake).
+
+### 1. Setting up the node
 
 ⚠️ **Please review the `OPTIONAL` steps before manually starting the project after running the `./scripts/init.sh` script.**
 
@@ -31,7 +47,7 @@ This script will generate all necessary deployment files under the [deployments]
 ./scripts/init.sh
 ```
 
-### Optional: ZKV Node Data Snapshots
+#### Optional: ZKV Node Data Snapshots
 
 To reduce the time required for a node's startup, **daily snapshots of chain data** are available for:
 - Testnet: https://bootstraps.zkverify.io/
@@ -43,7 +59,7 @@ Snapshots are available in two forms:
 
 Each snapshot is a **.tar.gz** archive containing the **db** directory, intended to replace the **db** directory generated during the initial node run.
 
-### Optional: ZKV Node Secrets Injection
+#### Optional: ZKV Node Secrets Injection
 
 During the initial deployment, if prompted, the script will generate and store **ZKV_NODE_KEY** and **ZKV_SECRET_PHRASE** values in the `.env` file.
 
@@ -62,6 +78,7 @@ Use the following steps to implement this approach:
     set -eu
     
     # TODO: Implement logic to inject secrets into the environment
+    # You need ALL the following keys to perform all the validation activities: "babe", "gran", "para", "audi", "asgn".
    
     # Run the application entrypoint
     echo "=== 🚀 Starting the application entrypoint now..."
@@ -74,9 +91,106 @@ Use the following steps to implement this approach:
       - "./entrypoint_secrets.sh:/app/entrypoint_secrets.sh:rw"
     entrypoint: ["/app/entrypoint_secrets.sh"]
     ```
-4. Start compose project using the command provided in the end of [init.sh](./scripts/init.sh) script execution.
+4. Start the compose project using the command provided in the end of [init.sh](./scripts/init.sh) script execution.
+
+
+### 2. Join Proof of Stake
+
+In this section you can learn how to register a new validator on the blockchain. The operations described below must be performed just once, **after the node started in the previous section has synchronized with the existing history of the selected zkVerify chain** (testnet or mainnet).  They consist of the submission of some extrinsics (transactions, in Substrate terminology) resulting in your node being able to author new blocks and consequently earn new tokens through staking mechanism.
+
+> **_NOTE_** Since you are going to submit extrinsics which change the blockchain state, you need sufficient funds in the account (uniquely identified by your secret phrase) associated with your validator so that you can pay transaction fees. Reach out to the zkVerify team to get your token allocation.
+
+#### Collect the Public Keys
+
+We will require the public keys associated with the secrets above for your validator to them with the network. You need *five* keys: Babe, Grandpa, Para Validator, Para Assignment, and Authority Discovery.
+
+If you let the ``init.sh`` script create the secret phrase for you, you will find your public keys at the bottom of the output env file (e.g. deployments/validator-node/mainnet/.env).
+
+For the rest of this section, we will assume the following keys:
+
+```
+Babe: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
+Grandpa: 0x0dbccabf681188116e642c1dbc9332a2bbec7fbef1792196879a3cba6c52464b
+ParaValidator: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
+ParaAssignment: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
+AuthorityDiscovery: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
+```
+
+> **_NOTE_** If you do not take the [optional step for key injection above](#optional:-zkv-node-secrets0injection), you must use the very same public key for all the types above but Grandpa. This is expected, given that Grandpa uses a signature scheme that is different from the others.
+
+#### Announce Session Keys Onchain
+
+Once you have these five keys, you need to visit [PolkadotJS](https://polkadot.js.org/apps/?rpc=wss://zkverify-rpc.zkverify.io#/extrinsics) and call the ``setKeys`` extrinsic under ``sessions`` module.
+
+In order to fill the `keys` field you need to concatenate the `Babe` key, followed by the `Grandpa` key (without the `0x` at the beginning), followed by the `ParaValidator` key (without the `0x` at the beginning), followed by the `ParaAssignment` key (without the `0x` at the beginning), followed by the `AuthorityDiscovery` key (without the `0x` at the beginning). **The order of the keys is fixed and must be preserved**. Considering the keys here above, the value for the `keys` field will be the following:
+
+```bash
+0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf99140dbccabf681188116e642c1dbc9332a2bbec7fbef1792196879a3cba6c52464bc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914c0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914c0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
+```
+
+The `proof` field can be set to ``0x``. Now sign and submit the extrinsic. In few seconds you should receive a green pop-up message on the top-right corner confirming the extrinsic has been succesfully submitted.
+
+![setkeys](doc/polkadotjs_setkeys_s1.png?raw=true "PolkadotJS setKeys")
+
+#### Staking VFY
+
+Next step would be to stake VFY for your registered validator node. 
+
+##### Initial Bonding
+
+Call the ``bond`` extrinsic under the ``staking`` module and fill in the value field with the amount of VFY you would like to stake. Finally, choose the account type in payee option and sign and submit your transaction. 
+
+Now your take would be to stake more than the lowest in the list of validators scheduled to be active in the next era.
+
+In order to get a picture of the current state, and get an estimate of the amount of tokens that you have to stake to be elected as a valdator for the next era, you can check the active and candidate validator sets in the current era in the same PolkadotJS. Navigate to ``Network`` > ``Staking``, and choose the ``Targets`` tab. You will get a complete list of validators, one per row. Each row has a ``total stake`` field, which represents the sum of the own stake of the validator itself, plus all the nominations that the validator received.
+
+Also, as of now you need to stake a minimum amount of 10000 VFY to become a validator.
+
+You can check the `MinimumValidatorBond` anytime by going to `Developer -> Chain State -> staking state query -> minValidatorBond` and clicking the ``+`` button. Notice that you need to remove 18 trailing digits to compute the amount in VFY.
+
+![bond](doc/polkadotjs_staking_bond.png?raw=true "PolkadotJS bond")
+
+##### Optional: Updating the Bond
+
+Once you have some tokens bonded, using again the ``bond`` extrinsic results in the error ``AlreadyBonded``.
+
+In order to bond more tokens from the free balance, you must use the ``bondExtra`` extrinsic from the ``staking`` module. If instead you wish to update the payee for your rewards, you should use the ``updatePayee`` extrinsic.
+
+##### Optional: Removing the Bond
+
+In order to remove a bond, the ``unbond`` extrinsic should be used. After that, once the unlocking period has passed, it is possible to use the ``withdraw_unbonded`` extrinsic to move the unbonded tokens back to the free balance.
+
+#### Start validating
+
+Once we have staked VFY, we are ready to start validating on the zkVerify network. We need to execute an extrinsic called as ``validate(prefs)`` under ``staking`` module which takes an input of how much commission your validator would take from the nominations. (If you are not sure, you can put ``100000000``, corresponding to ``10%``, as the default value). Also set the ``blocked`` field to ``no`` and sign and submit the transaction.
+
+Wait for a green pop-up message confirming successful submission. As an additional double check you can navigate to the section `Network` then to the subsection `Staking`, click on `Waiting` tab and verify that your validator is within the list.
+
+That's it! You just need to wait for the completion of the current era and the next one (since an era lasts for 6 hours, in the worst case this would be 12 hours).  After that, provided that your stake grants you a slot in tha active validator set, your node will start authoring new blocks. You can check this by navigating to the section `Network` then to the subsection `Explorer` for a summarized view of the list of recently authored blocks, or to the section `Network` then to the subsection `Staking` for an advanced console specifically designed for staking.
+
+![bond](doc/polkadotjs_staking_validate.png?raw=true "PolkadotJS validate")
+
+#### Collect the Rewards
+
+In order to claim the new tokens you and your nominators deserve for securing the blockchain, you need to submit a dedicated exintrinsic. Navigate to the section `Developer` then to the subsection `Extrinsics` and select `staking`, `payoutStakers`. Choose your validator account as `validatorStash: AccountId32` and insert target era in the textbox `era: u32 (EraIndex)`.  Finally click on `Submit Transaction` button:
+
+![claim](./doc/polkadotjs_claim.png?raw=true "PolkadotJS Claim")
+
+the era index being retrievable from section `Developer` then to the subsection `Chain state`, state `staking`, `erasRewardPoints`, then filtering with respect to your validator account. Notice that an era lasts for 6 hours, so you will have to claim the rewards for up to 4 eras per day. **Rewards must be claimed within 30 eras (i.e. approximately 1 week) since the end of an era, otherwise the reward for such era is lost.**
+
+You can also check what eras have already been claimed from section `Developer` then to the subsection `Chain state`, state `staking`, `claimedRewards`, then filtering by era number and your validator account. An empty result indicates that no claim was performed for such era for such validator, whereas any result which includes a `0` (plus potentially some other digits in case of more than 64 nominators) indicates that the reward was already claimed for such era and such validator.
+
+![claimed](./doc/polkadotjs_claimedrewards.png?raw=true "PolkadotJS Claimed Rewards")
+
+---
+
+## Management Scripts
 
 ### Update
+
+```shell
+./scripts/update.sh
+```
 
 To update the project to a new version (e.g., when a new release is available):
 
@@ -85,33 +199,29 @@ To update the project to a new version (e.g., when a new release is available):
 
 ⚠️ If the script prompts to update values in the `.env` file, it is **recommended** to accept all changes, unless there is a specific reason not to.
 
-```shell
-./scripts/update.sh
-```
-
 ### Destroy
-
-Run the [destroy.sh](./scripts/destroy.sh) script to destroy the node stack and all the associated resources. The script will prompt for confirmation before removing any resources.
 
 ```shell
 ./scripts/destroy.sh
 ```
 
-### Start
+Run the [destroy.sh](./scripts/destroy.sh) script to destroy the node stack and all the associated resources. The script will prompt for confirmation before removing any resources.
 
-Run the [start.sh](./scripts/start.sh) script to start the node stack.
+### Start
 
 ```shell
 ./scripts/start.sh
 ```
 
-### Stop
+Run the [start.sh](./scripts/start.sh) script to start the node stack.
 
-Run the [stop.sh](./scripts/stop.sh) script to just stop the node stack.
+### Stop
 
 ```shell
 ./scripts/stop.sh
 ```
+
+Run the [stop.sh](./scripts/stop.sh) script to just stop the node stack.
 
 ---
 
