@@ -98,11 +98,17 @@ Use the following steps to implement this approach:
 
 In this section you can learn how to register a new validator on the blockchain. The operations described below must be performed just once, **after the node started in the previous section has synchronized with the existing history of the selected zkVerify chain** (testnet or mainnet).  They consist of the submission of some extrinsics (transactions, in Substrate terminology) resulting in your node being able to author new blocks and consequently earn new tokens through staking mechanism.
 
-> **_NOTE_** Since you are going to submit extrinsics which change the blockchain state, you need sufficient funds in the account (uniquely identified by your secret phrase) associated with your validator so that you can pay transaction fees. Reach out to the zkVerify team to get your token allocation.
+#### Create a New Validator Account
 
-#### Collect the Public Keys
+First, you need a zkVerify account that you will use to execute all the operations needed for becoming a validator. Notice, this will be the Validator account whose address will show up in the list of validators for zkVerify. This account needs a sufficient balance to be able to bond enough tokens and execute management operations on chain, and for such reason **we highly encourage to use a secure wallet extension (e.g. Subwallet) for storing the secrets of the account**. At the same time, we advice against storing this account's secrets directly in PolkadotJS.
 
-We will require the public keys associated with the secrets above for your validator to them with the network. You need *five* keys: Babe, Grandpa, Para Validator, Para Assignment, and Authority Discovery.
+> **_NOTE_** Since you are going to submit extrinsics which change the blockchain state, you need sufficient funds in the account. If necessary, reach out to the zkVerify team and provide your account address to get your token allocation.
+
+#### Collect the Session Keys
+
+Session keys are the keys that will sign all the validation operations behind the scenes. You will never use these keys directly in your wallet to sign transactions, but your node will use them to sign operational messages that are at the base of the security of the network. For this reason, **we strongly advise that these public keys do not belong to the same keypair as the one used for the Validator account above.**
+
+We will require the public keys associated with the secrets injected in the node in the [node setup section](#1.-setting-up-the-node) to share them with the network.   You need *five* public keys: Babe, Grandpa, Para Validator, Para Assignment, and Authority Discovery.
 
 If you let the ``init.sh`` script create the secret phrase for you, you will find your public keys at the bottom of the output env file (e.g. deployments/validator-node/mainnet/.env).
 
@@ -138,17 +144,27 @@ Next step would be to stake VFY for your registered validator node.
 
 ##### Initial Bonding
 
-Call the ``bond`` extrinsic under the ``staking`` module and fill in the value field with the amount of VFY you would like to stake. Finally, choose the account type in payee option and sign and submit your transaction. 
+Call the ``bond`` extrinsic under the ``staking`` module. You need to fill in two fields, that we will describe in this section: (1) the *value* field with the amount of VFY you would like to stake, and (2) the *payee* field that selects where to receive the staking rewards.
 
-Now your take would be to stake more than the lowest in the list of validators scheduled to be active in the next era.
+![bond](doc/polkadotjs_staking_bond.png?raw=true "PolkadotJS bond")
+
+###### Value
+
+When determining the amount of tokes to bond, your take would be to stake more than the lowest in the list of validators scheduled to be active in the next era.
 
 In order to get a picture of the current state, and get an estimate of the amount of tokens that you have to stake to be elected as a valdator for the next era, you can check the active and candidate validator sets in the current era in the same PolkadotJS. Navigate to ``Network`` > ``Staking``, and choose the ``Targets`` tab. You will get a complete list of validators, one per row. Each row has a ``total stake`` field, which represents the sum of the own stake of the validator itself, plus all the nominations that the validator received.
 
-Also, as of now you need to stake a minimum amount of 10000 VFY to become a validator.
+Also, as of now you need to stake a minimum amount of 100000 VFY to become a validator.
 
 You can check the `MinimumValidatorBond` anytime by going to `Developer -> Chain State -> staking state query -> minValidatorBond` and clicking the ``+`` button. Notice that you need to remove 18 trailing digits to compute the amount in VFY.
 
-![bond](doc/polkadotjs_staking_bond.png?raw=true "PolkadotJS bond")
+###### Payee
+
+Next, you must choose the account type in payee option; this options determines where the reward for being a validator will be credited. The default will be *Staked*, which means that the reward, when claimed, will automatically increase your bond amount. It will still be possible to unlock such funds at a later time, but it will require manual intervention and will incur an unlocing delay (see the [Removing the Bond section](#optional:-updating-the-bond)).
+
+If instead you wish to receive tokens that you can use without restrictions immediately, we suggest to select either *Stash* or *Account*. *Stash* credit your rewards on the same account that owns the bond, while the *Account* type lets you fill in any account that you own in the field that appears below (as shown in the picture).
+
+We discourage using the deprecated *Controller* option.
 
 ##### Optional: Updating the Bond
 
