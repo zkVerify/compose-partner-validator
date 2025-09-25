@@ -33,7 +33,7 @@ The **network** can be chosen to be *testnet* (i.e. [the Volta testnet](https://
 ---
 
 ## Instructions
-In order to become an active validator on zkVerify, and be compensated for such activities, you need to (1) [set up your node](#setting-up-the-node), and (2) [state your intent on chain in the Proof of Stake consensus](#join-proof-of-stake).
+In order to become an active validator on zkVerify, and be compensated for such activities, you need to (1) [set up your node](#1-setting-up-the-node), and (2) [state your intent on chain in the Proof of Stake consensus](#2-join-proof-of-stake).
 
 ### 1. Setting up the node
 
@@ -108,7 +108,7 @@ First, you need a zkVerify account that you will use to execute all the operatio
 
 Session keys are the keys that will sign all the validation operations behind the scenes. You will never use these keys directly in your wallet to sign transactions, but your node will use them to sign operational messages that are at the base of the security of the network. For this reason, **we strongly advise that these public keys do not belong to the same keypair as the one used for the Validator account above.**
 
-We will require the public keys associated with the secrets injected in the node in the [node setup section](#1.-setting-up-the-node) to share them with the network.   You need *five* public keys: Babe, Grandpa, Para Validator, Para Assignment, and Authority Discovery.
+We will require the public keys associated with the secrets injected in the node in the [node setup section](#1-setting-up-the-node) to share them with the network.   You need *five* public keys: Babe, Grandpa, Para Validator, Para Assignment, and Authority Discovery.
 
 If you let the ``init.sh`` script create the secret phrase for you, you will find your public keys at the bottom of the output env file (e.g. deployments/validator-node/mainnet/.env).
 
@@ -126,7 +126,7 @@ AuthorityDiscovery: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87
 
 #### Announce Session Keys Onchain
 
-Once you have these five keys, you need to visit [PolkadotJS](https://polkadot.js.org/apps/?rpc=wss://zkverify-rpc.zkverify.io#/extrinsics) and call the ``setKeys`` extrinsic under ``sessions`` module.
+Once you have these five keys, you need to visit [PolkadotJS](https://polkadot.js.org/apps/?rpc=wss://zkverify-rpc.zkverify.io#/extrinsics) and call the ``setKeys`` extrinsic under ``sessions`` module. Make sure that you sign and submit the extrinsic from your Validator account through your wallet extension.
 
 In order to fill the `keys` field you need to concatenate the `Babe` key, followed by the `Grandpa` key (without the `0x` at the beginning), followed by the `ParaValidator` key (without the `0x` at the beginning), followed by the `ParaAssignment` key (without the `0x` at the beginning), followed by the `AuthorityDiscovery` key (without the `0x` at the beginning). **The order of the keys is fixed and must be preserved**. Considering the keys here above, the value for the `keys` field will be the following:
 
