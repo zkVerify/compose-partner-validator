@@ -47,10 +47,9 @@ This script will generate all necessary deployment files under the [deployments]
 ./scripts/init.sh
 ```
 
-#### Optional: ZKV Node Data Snapshots
+### Optional: ZKV Node Data Snapshots
 
 To reduce the time required for a node's startup, **daily snapshots of chain data** are available for:
-
 - Mainnet: https://bootstraps.zkverify.io/
 - Testnet: https://bootstraps.zkverify.io/volta
 
@@ -67,14 +66,14 @@ To use a snapshot:
    ```shell
    ./scripts/stop.sh
    ```
-2. Navigate to the node's data directory. This may require `sudo` access. For an RPC node, the path is:
+2. Navigate to the node's data directory. This may require `sudo` permissions. For an RPC node, the path is:
    ```
-   /var/lib/docker/volumes/zkverify-rpc_node-data/_data/node/chains/zkv_mainnet
+   cd /var/lib/docker/volumes/zkverify-rpc_node-data/_data/node/chains/zkv_mainnet
    ```
-3. Note the owner and permissions of the existing `db` folder, then delete it.
-4. Extract the downloaded snapshot and move its `db` folder to the current directory.
-5. Ensure the new `db` folder have the same permission the original db folder had
-6. Start the node:
+3. Note the owner and permissions of the existing `db` directory, then delete it.
+4. Extract the downloaded snapshot and move its `db` directory into the current directory.
+5. Ensure the new `db` directory has the same permissions as the original db directory.
+6. Return to the project directory and start the node:
    ```shell
    ./scripts/start.sh
    ```
