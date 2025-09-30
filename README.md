@@ -47,7 +47,7 @@ This script will generate all necessary deployment files under the [deployments]
 ./scripts/init.sh
 ```
 
-### Optional: ZKV Node Data Snapshots
+#### Optional: ZKV Node Data Snapshots
 
 To reduce the time required for a node's startup, **daily snapshots of chain data** are available for:
 - Mainnet: https://bootstraps.zkverify.io/
