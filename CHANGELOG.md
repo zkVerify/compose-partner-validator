@@ -1,3 +1,6 @@
+## 1.0.2
+* node: added **ZKV_CONF_BLOCKS_PRUNING=14400** blocks pruning configuration
+
 ## 1.0.1
 * node: added **ZKV_CONF_NO_PRIVATE_IP** and **ZKV_CONF_NO_MDNS** as failsafe mechanism to prevent network abuse from the node
 
