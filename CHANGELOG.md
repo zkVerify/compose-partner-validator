@@ -1,3 +1,6 @@
+## 1.0.3
+* node: added **ZKV_CONF_STATE_PRUNING=4096** state pruning configuration
+
 ## 1.0.2
 * node: added **ZKV_CONF_BLOCKS_PRUNING=14400** blocks pruning configuration
 
