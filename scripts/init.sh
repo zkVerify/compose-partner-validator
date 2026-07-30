@@ -39,6 +39,8 @@ if ! [ -d "${DEPLOYMENT_DIR}" ]; then
 
     set_up_node_name_env_var
 
+    set_up_public_addr
+
     if [ "${NODE_TYPE}" = "validator-node" ]; then
       create_node_key
       create_secret_phrase
