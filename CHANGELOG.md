@@ -1,3 +1,11 @@
+## 1.0.4
+* node: zkVerify version for testnet pinned to `2.0.0-rc1`
+* node: added optional **ZKV_CONF_PUBLIC_ADDR** variable
+* automation: `init.sh` and `update.sh` scripts prompt to set **ZKV_CONF_PUBLIC_ADDR**
+* automation: `update.sh` script syncs **NODE_VERSION** from the template
+* automation: `docker compose` version check accepts v2 and newer
+* automation: interactive menus list one option per line
+
 ## 1.0.3
 * node: added **ZKV_CONF_STATE_PRUNING=4096** state pruning configuration
 
