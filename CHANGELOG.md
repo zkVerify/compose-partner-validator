@@ -1,3 +1,7 @@
+## 1.0.5
+* node: zkVerify version for mainnet pinned to `2.0.0`
+* node: zkVerify version for testnet updated to `2.0.0`
+
 ## 1.0.4
 * node: zkVerify version for testnet pinned to `2.0.0-rc1`
 * node: added optional **ZKV_CONF_PUBLIC_ADDR** variable
