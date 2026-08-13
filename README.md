@@ -29,6 +29,8 @@ The **network** can be chosen to be *testnet* (i.e. [the Volta testnet](https://
 * docker compose (v2 or newer)
 * jq
 * gnu-sed for Darwin distribution
+* inbound TCP 80 and 443 open, for the Let's Encrypt HTTP-01 challenge and for the zkVerify team's mTLS access to the metrics endpoint
+* inbound TCP on **NODE_NET_P2P_PORT** (default 30333) open, for peer-to-peer connections
 
 ---
 
@@ -36,6 +38,8 @@ The **network** can be chosen to be *testnet* (i.e. [the Volta testnet](https://
 In order to become an active validator on zkVerify, and be compensated for such activities, you need to (1) [set up your node](#1-setting-up-the-node), and (2) [state your intent on chain in the Proof of Stake consensus](#2-join-proof-of-stake).
 
 ### 1. Setting up the node
+
+⚠️ **Never run two nodes with the same session keys or node key at the same time. Double signing will slash your bond.**
 
 ⚠️ **Please review the `OPTIONAL` steps before manually starting the project after running the `./scripts/init.sh` script.**
 
@@ -58,6 +62,8 @@ Snapshots are available in two forms:
 - **Node snapshot**
 - **Archive node snapshot**
 
+The templates in this repository set `ZKV_CONF_BLOCKS_PRUNING=14400` and `ZKV_CONF_STATE_PRUNING=4096`, so the node runs pruned. Use the **Node snapshot**, not the archive snapshot.
+
 Each snapshot is a **.tar.gz** archive containing the **db** directory, intended to replace the **db** directory generated during the initial node run.
 
 To use a snapshot:
@@ -66,10 +72,15 @@ To use a snapshot:
    ```shell
    ./scripts/stop.sh
    ```
-2. Navigate to the node's data directory. This may require `sudo` permissions. For an RPC node, the path is:
-   ```
-   cd /var/lib/docker/volumes/zkverify-rpc_node-data/_data/node/chains/zkv_mainnet
-   ```
+2. Navigate to the node's data directory. This may require `sudo` permissions. The path depends on the network:
+   - Mainnet:
+     ```
+     cd /var/lib/docker/volumes/zkv-partner-validator_node-data/_data/node/chains/zkv_mainnet
+     ```
+   - Testnet:
+     ```
+     cd /var/lib/docker/volumes/zkv-partner-validator-testnet_node-data/_data/node/chains/zkv_testnet
+     ```
 3. Note the owner and permissions of the existing `db` directory, then delete it.
 4. Extract the downloaded snapshot and move its `db` directory into the current directory.
 5. Ensure the new `db` directory has the same permissions as the original db directory.
@@ -89,11 +100,11 @@ Alternatively, these secrets can be injected at runtime using a custom container
 Use the following steps to implement this approach:
 
 1. Delete values of **ZKV_NODE_KEY** and **ZKV_SECRET_PHRASE** under the `deployments/validator-node/${NETWORK}/.env`
-    ```bazaar
+    ```dotenv
     ZKV_NODE_KEY=""
     ZKV_SECRET_PHRASE=""
     ```
-2. Create **entrypoint_secrets.sh** file under `deployments/validator-node/${NETWORK}/` directory. For example:
+2. Create **entrypoint_secrets.sh** file under `deployments/validator-node/${NETWORK}/` directory and make it executable with `chmod +x`. For example:
     ```
     #!/usr/bin/env sh
     set -eu
@@ -109,10 +120,11 @@ Use the following steps to implement this approach:
     ```
     volumes:
       - "node-data:/data:rw"
-      - "./entrypoint_secrets.sh:/app/entrypoint_secrets.sh:rw"
+      - "./entrypoint_secrets.sh:/app/entrypoint_secrets.sh:ro"
     entrypoint: ["/app/entrypoint_secrets.sh"]
     ```
 4. Start the compose project using the command provided in the end of [init.sh](./scripts/init.sh) script execution.
+5. Once the node has started and offline copies of the secrets are stored, securely delete the remaining plaintext copies in `deployments/validator-node/${NETWORK}/configs/node/secrets/` and any `deployments/validator-node/${NETWORK}_BK_*` directories.
 
 #### Optional: Public Address
 
@@ -163,7 +175,7 @@ ParaAssignment: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf99
 AuthorityDiscovery: 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
 ```
 
-> **_NOTE_** If you do not take the [optional step for key injection above](#optional:-zkv-node-secrets0injection), you must use the very same public key for all the types above but Grandpa. This is expected, given that Grandpa uses a signature scheme that is different from the others.
+> **_NOTE_** If you do not take the [optional step for key injection above](#optional-zkv-node-secrets-injection), you must use the very same public key for all the types above but Grandpa. This is expected, given that Grandpa uses a signature scheme that is different from the others.
 
 #### Announce Session Keys Onchain
 
@@ -175,7 +187,7 @@ In order to fill the `keys` field you need to concatenate the `Babe` key, follow
 0xc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf99140dbccabf681188116e642c1dbc9332a2bbec7fbef1792196879a3cba6c52464bc0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914c0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914c0c07abce7879c09231fcbd07165cfaabc4a634636850578a914b08b87cf9914
 ```
 
-The `proof` field can be set to ``0x``. Now sign and submit the extrinsic. In few seconds you should receive a green pop-up message on the top-right corner confirming the extrinsic has been succesfully submitted.
+The `proof` field can be set to ``0x``. Now sign and submit the extrinsic. In few seconds you should receive a green pop-up message on the top-right corner confirming the extrinsic has been successfully submitted.
 
 ![setkeys](doc/polkadotjs_setkeys_s1.png?raw=true "PolkadotJS setKeys")
 
@@ -191,9 +203,9 @@ Call the ``bond`` extrinsic under the ``staking`` module. You need to fill in tw
 
 ###### Value
 
-When determining the amount of tokes to bond, your take would be to stake more than the lowest in the list of validators scheduled to be active in the next era.
+When determining the amount of tokens to bond, aim to stake more than the lowest in the list of validators scheduled to be active in the next era.
 
-In order to get a picture of the current state, and get an estimate of the amount of tokens that you have to stake to be elected as a valdator for the next era, you can check the active and candidate validator sets in the current era in the same PolkadotJS. Navigate to ``Network`` > ``Staking``, and choose the ``Targets`` tab. You will get a complete list of validators, one per row. Each row has a ``total stake`` field, which represents the sum of the own stake of the validator itself, plus all the nominations that the validator received.
+In order to get a picture of the current state, and get an estimate of the amount of tokens that you have to stake to be elected as a validator for the next era, you can check the active and candidate validator sets in the current era in the same PolkadotJS. Navigate to ``Network`` > ``Staking``, and choose the ``Targets`` tab. You will get a complete list of validators, one per row. Each row has a ``total stake`` field, which represents the sum of the own stake of the validator itself, plus all the nominations that the validator received.
 
 Also, as of now you need to stake a minimum amount of 100000 VFY to become a validator.
 
@@ -201,7 +213,7 @@ You can check the `MinimumValidatorBond` anytime by going to `Developer -> Chain
 
 ###### Payee
 
-Next, you must choose the account type in payee option; this options determines where the reward for being a validator will be credited. The default will be *Staked*, which means that the reward, when claimed, will automatically increase your bond amount. It will still be possible to unlock such funds at a later time, but it will require manual intervention and will incur an unlocing delay (see the [Removing the Bond section](#optional:-updating-the-bond)).
+Next, you must choose the account type in payee option; this options determines where the reward for being a validator will be credited. The default will be *Staked*, which means that the reward, when claimed, will automatically increase your bond amount. It will still be possible to unlock such funds at a later time, but it will require manual intervention and will incur an unlocking delay (see the [Removing the Bond section](#optional-removing-the-bond)).
 
 If instead you wish to receive tokens that you can use without restrictions immediately, we suggest to select either *Stash* or *Account*. *Stash* credit your rewards on the same account that owns the bond, while the *Account* type lets you fill in any account that you own in the field that appears below (as shown in the picture).
 
@@ -223,13 +235,13 @@ Once we have staked VFY, we are ready to start validating on the zkVerify networ
 
 Wait for a green pop-up message confirming successful submission. As an additional double check you can navigate to the section `Network` then to the subsection `Staking`, click on `Waiting` tab and verify that your validator is within the list.
 
-That's it! You just need to wait for the completion of the current era and the next one (since an era lasts for 6 hours, in the worst case this would be 12 hours).  After that, provided that your stake grants you a slot in tha active validator set, your node will start authoring new blocks. You can check this by navigating to the section `Network` then to the subsection `Explorer` for a summarized view of the list of recently authored blocks, or to the section `Network` then to the subsection `Staking` for an advanced console specifically designed for staking.
+That's it! You just need to wait for the completion of the current era and the next one (since an era lasts for 6 hours, in the worst case this would be 12 hours).  After that, provided that your stake grants you a slot in the active validator set, your node will start authoring new blocks. You can check this by navigating to the section `Network` then to the subsection `Explorer` for a summarized view of the list of recently authored blocks, or to the section `Network` then to the subsection `Staking` for an advanced console specifically designed for staking.
 
 ![bond](doc/polkadotjs_staking_validate.png?raw=true "PolkadotJS validate")
 
 #### Collect the Rewards
 
-In order to claim the new tokens you and your nominators deserve for securing the blockchain, you need to submit a dedicated exintrinsic. Navigate to the section `Developer` then to the subsection `Extrinsics` and select `staking`, `payoutStakers`. Choose your validator account as `validatorStash: AccountId32` and insert target era in the textbox `era: u32 (EraIndex)`.  Finally click on `Submit Transaction` button:
+In order to claim the new tokens you and your nominators deserve for securing the blockchain, you need to submit a dedicated extrinsic. Navigate to the section `Developer` then to the subsection `Extrinsics` and select `staking`, `payoutStakers`. Choose your validator account as `validatorStash: AccountId32` and insert target era in the textbox `era: u32 (EraIndex)`.  Finally click on `Submit Transaction` button:
 
 ![claim](./doc/polkadotjs_claim.png?raw=true "PolkadotJS Claim")
 

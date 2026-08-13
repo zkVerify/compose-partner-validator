@@ -1,3 +1,8 @@
+## 2.0.0
+* node: zkVerify version pinned to `2.0.0` for testnet and mainnet
+* docs: README corrections and added double signing warning
+* general: updated bug report and pull request templates
+
 ## 1.0.5
 * node: zkVerify version for mainnet pinned to `2.0.0`
 * node: zkVerify version for testnet updated to `2.0.0`
