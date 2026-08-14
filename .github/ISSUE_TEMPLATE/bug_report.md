@@ -21,5 +21,8 @@ A clear and concise description of what you expected to happen (or code).
 
 ### Environment
 
-- Node/npm version: [e.g. Node 8/npm 5]
-- OS: [e.g. OSX 10.13.4, Windows 10]
+- Docker version: [output of `docker version`]
+- Docker Compose version: [output of `docker compose version`]
+- OS: [e.g. Ubuntu 22.04, macOS 14]
+- Network: [testnet or mainnet]
+- Repository version or tag: [e.g. 2.0.0]

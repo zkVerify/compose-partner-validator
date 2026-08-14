@@ -1,19 +1,17 @@
 ## Description
-<Description of the pull request>
+<!-- Description of the pull request -->
 
-## Jira Ticket
-[<Ticket Number>](<Ticket Url>)
+## Jira Ticket (internal, optional)
+<!-- [Ticket Number](Ticket URL) -->
 
 ## Changes
-<Changes made> 
+<!-- Changes made -->
 
 ## Breaking Changes
-<Please remember to mention anyone that may be affected by these changes so that they are aware of this PR>
-- <@...> 
+<!-- Mention anyone that may be affected by these changes so that they are aware of this PR, for example @username -->
 
 ## Checks
-- [ ] Project Builds
-- [ ] Project passes tests and checks
+- [ ] Scripts run without errors on a test deployment
 - [ ] Updated documentation accordingly
 - [ ] Breaking changes have been correctly tagged and notified
 
