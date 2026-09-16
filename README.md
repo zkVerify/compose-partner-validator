@@ -227,7 +227,7 @@ In order to bond more tokens from the free balance, you must use the ``bondExtra
 
 ##### Optional: Removing the Bond
 
-In order to remove a bond, the ``unbond`` extrinsic should be used. After that, once the unlocking period has passed, it is possible to use the ``withdraw_unbonded`` extrinsic to move the unbonded tokens back to the free balance.
+In order to remove a bond, the ``unbond`` extrinsic in the ``staking`` module should be used. After that, once the unlocking period has passed, it is possible to use the ``withdraw_unbonded`` extrinsic to move the unbonded tokens back to the free balance.
 
 #### Start validating
 
@@ -250,6 +250,48 @@ the era index being retrievable from section `Developer` then to the subsection 
 You can also check what eras have already been claimed from section `Developer` then to the subsection `Chain state`, state `staking`, `claimedRewards`, then filtering by era number and your validator account. An empty result indicates that no claim was performed for such era for such validator, whereas any result which includes a `0` (plus potentially some other digits in case of more than 64 nominators) indicates that the reward was already claimed for such era and such validator.
 
 ![claimed](./doc/polkadotjs_claimedrewards.png?raw=true "PolkadotJS Claimed Rewards")
+
+### 3. Leave Proof of Stake
+
+In this section you can learn how to cease the validation on the blockchain, without losing VFY tokens or causing any disruption. The operations described below must be performed just once, **before the validator node is stopped**.  They consist of the submission of some extrinsics (transactions, in Substrate terminology) resulting in your node retiring from the active validators set, and your staked funds being unlocked.
+
+#### Chill Your Validator
+
+Call the ``chill`` extrinsic under the ``staking`` module. This extrinsic will make your validator bail out from the list of validation candidates, thus stop validating starting from the first era after the extrinsic was sent (or the one after that, under certain conditions).
+
+#### Wait
+
+Wait ~12 hours from the chill extrinsic above, and check that your validator is not part of the active set in the ``Network`` > ``Staking`` panel in PolkadotJS. 
+
+#### (Optional) Claim any Last Rewards
+
+Claim any pending rewards for your last validation eras. You might not be able to claim such rewards after the [Withdraw the Unbonded Funds](#withdraw-the-unbonded-funds) step below. You can refer to the [section above](#collect-the-rewards).
+
+#### Remove the Bond Completely
+
+Call the ``unbond`` extrinsic under the ``staking`` module, with a value that is greater than or equal to the currently staked amount. This operation will unbond *all* your staked funds. 
+
+![unbond](./doc/polkadotjs_staking_unbond.png?raw=true "PolkadotJS Unbond")
+
+#### Purge Session Keys
+
+Call the ``purgeKeys`` extrinsic under the ``session`` module. This extrinsic will remove your previously published session keys from the on chain state.
+
+#### Shut Down the Node
+
+Once the staked amount is 0, it is possible to safely shut down the validator node. You can use the `stop.sh` and `destroy.sh` scripts in this repo to complete the operation.
+
+#### Wait for the Unlocking Period
+
+Wait 7 days (i.e. 28 zkVerify eras) so that the unlocking period is passed. During this period, the unbonded funds will still be locked.
+
+#### Withdraw the Unbonded Funds
+
+Once the unlocking period has passed, call the ``withdrawUnbonded`` extrinsic under the ``staking`` module, leaving `numSlashingSpans: u32` to 0.
+
+#### Return the Grant
+
+If requested to return the VFY token grant, the zkVerify Foundation will reach out to you with further details.
 
 ---
 
