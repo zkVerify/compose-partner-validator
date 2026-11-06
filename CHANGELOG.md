@@ -1,3 +1,7 @@
+## 2.1.0
+* node: zkVerify version pinned to `2.1.0` for testnet and mainnet
+* docs: README updated to include validator shutdown instructions
+
 ## 2.0.0
 * node: zkVerify version pinned to `2.0.0` for testnet and mainnet
 * docs: README corrections and added double signing warning
