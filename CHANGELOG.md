@@ -1,3 +1,6 @@
+## 2.1.1
+* proxy: HTTP/2 disabled on `nginx-proxy` and the node's host set as its default host (hardening). Run `update.sh` and recreate the containers to apply
+
 ## 2.1.0
 * node: zkVerify version pinned to `2.1.0` for testnet and mainnet
 * docs: README updated to include validator shutdown instructions
